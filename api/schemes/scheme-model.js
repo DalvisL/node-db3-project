@@ -1,4 +1,6 @@
-function find() { // EXERCISE A
+const db = require('../../data/db-config.js');
+
+async function find() { // EXERCISE A
   /*
     1A- Study the SQL query below running it in SQLite Studio against `data/schemes.db3`.
     What happens if we change from a LEFT join to an INNER join?
@@ -15,9 +17,18 @@ function find() { // EXERCISE A
     2A- When you have a grasp on the query go ahead and build it in Knex.
     Return from this function the resulting dataset.
   */
+
+  const rows = await db('schemes as sc')
+    .leftJoin('steps as st', 'sc.scheme_id', 'st.scheme_id')
+    .select('sc.*')
+    .count('st.step_id as number_of_steps')
+    .groupBy('sc.scheme_id')
+    .orderBy('sc.scheme_id', 'asc');
+
+  return rows;
 }
 
-function findById(scheme_id) { // EXERCISE B
+async function findById(scheme_id) { // EXERCISE B
   /*
     1B- Study the SQL query below running it in SQLite Studio against `data/schemes.db3`:
 
@@ -32,6 +43,7 @@ function findById(scheme_id) { // EXERCISE B
 
     2B- When you have a grasp on the query go ahead and build it in Knex
     making it parametric: instead of a literal `1` you should use `scheme_id`.
+
 
     3B- Test in Postman and see that the resulting data does not look like a scheme,
     but more like an array of steps each including scheme information:
@@ -83,6 +95,32 @@ function findById(scheme_id) { // EXERCISE B
         "steps": []
       }
   */
+
+  const rows = await db('schemes as sc')
+    .leftJoin('steps as st', 'sc.scheme_id', 'st.scheme_id')
+    .select('sc.scheme_name', 'st.*')
+    .orderBy('st.step_number', 'asc')
+    .where('sc.scheme_id', `${scheme_id}`);
+
+    if (rows.length === 0) {
+      return null;
+    }
+
+  const steps = rows
+    .filter(row => row.step_id !== null)
+    .map(row => ({
+      step_id: row.step_id,
+      step_number: row.step_number,
+      instructions: row.instructions,
+  }));
+
+  const scheme = {
+    scheme_id: rows[0].scheme_id,
+    scheme_name: rows[0].scheme_name,
+    steps: steps,
+  };
+
+  return scheme;
 }
 
 function findSteps(scheme_id) { // EXERCISE C
