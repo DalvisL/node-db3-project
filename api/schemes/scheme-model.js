@@ -179,12 +179,26 @@ async function add(scheme) { // EXERCISE D
   return newScheme;
 }
 
-function addStep(scheme_id, step) { // EXERCISE E
+async function addStep(scheme_id, step) { // EXERCISE E
   /*
     1E- This function adds a step to the scheme with the given `scheme_id`
     and resolves to _all the steps_ belonging to the given `scheme_id`,
     including the newly created one.
+
+    an example sql query would be:
+    INSERT INTO steps 
+      (step_number, instructions, scheme_id)
+    VALUES(5, 'wreak havoc', 6);
   */
+  await db('steps')
+    .insert({...step, scheme_id: scheme_id});
+  
+  const result = await db('steps')
+    .where('scheme_id', `${scheme_id}`)
+    .orderBy('step_number', 'asc');
+
+  return result;
+
 }
 
 module.exports = {
